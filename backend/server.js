@@ -10,9 +10,45 @@ const multer = require('multer');
 
 const app = express();
 app.use(express.json());
-// Configure CORS origin via environment variable for flexibility across environments
-const corsOrigin = process.env.CORS_ORIGIN || '*';
-app.use(cors({ origin: corsOrigin }));
+// Configure CORS with normalized origins (support single or comma-separated)
+const rawCorsOrigins = process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || '*';
+function normalizeOrigin(origin) {
+  if (!origin) return '';
+  if (/^https?:\/\//i.test(origin)) return origin;
+  // If scheme is missing, default to https
+  return `https://${origin}`;
+}
+let corsOptions;
+if (rawCorsOrigins.trim() === '*') {
+  corsOptions = { origin: '*' };
+} else {
+  const origins = rawCorsOrigins
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+  const normalizedOrigins = new Set();
+  origins.forEach((o) => {
+    const httpsOrigin = normalizeOrigin(o);
+    normalizedOrigins.add(httpsOrigin);
+    // Also allow http variant if https was provided without explicit scheme in env
+    if (!/^https?:\/\//i.test(o)) {
+      normalizedOrigins.add(httpsOrigin.replace(/^https:\/\//i, 'http://'));
+    }
+  });
+  corsOptions = {
+    origin: (requestOrigin, callback) => {
+      // Allow non-CORS requests (like curl or SSR without Origin)
+      if (!requestOrigin) return callback(null, true);
+      if (normalizedOrigins.has(requestOrigin)) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'));
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 204,
+  };
+}
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded images
 
 // Multer configuration for image uploads

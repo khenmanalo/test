@@ -634,6 +634,8 @@ function App() {
             setCurrentPage={setCurrentPage}
             setIsAuthenticated={setIsAuthenticated}
             setUserRole={setUserRole}
+            setCart={setCart}
+            setParentError={setError}
           />
         )}
         {currentPage === "home" && <HomePage />}

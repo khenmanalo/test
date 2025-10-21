@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_BASE_URL } from './config';
 import { Eye, EyeOff } from 'lucide-react';
 import './AuthForm.css';
 
@@ -65,7 +66,6 @@ const AuthForm = ({ setCurrentPage, setIsAuthenticated, setUserRole, setCart, se
     setLoading(true);
 
     try {
-      const apiUrl = 'http://localhost:5000'; // Ensure this matches your backend
       if (!isLogin) {
         if (!email) {
           setError('Email is required for signup');
@@ -85,7 +85,7 @@ const AuthForm = ({ setCurrentPage, setIsAuthenticated, setUserRole, setCart, se
           return;
         }
 
-        const response = await fetch(`${apiUrl}/api/signup`, {
+        const response = await fetch(`${API_BASE_URL}/signup`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
           body: JSON.stringify({ username, email, password, consent }),
@@ -113,7 +113,7 @@ const AuthForm = ({ setCurrentPage, setIsAuthenticated, setUserRole, setCart, se
         }
       } else {
         // Try user login with email or username
-        let response = await fetch(`${apiUrl}/api/login`, {
+        let response = await fetch(`${API_BASE_URL}/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
           body: JSON.stringify({ email: username.includes('@') ? username : undefined, username: username.includes('@') ? undefined : username, password }),
@@ -134,7 +134,7 @@ const AuthForm = ({ setCurrentPage, setIsAuthenticated, setUserRole, setCart, se
           localStorage.setItem('role', 'user');
           setIsAuthenticated(true);
           setUserRole('user');
-          const cartResponse = await fetch(`${apiUrl}/api/cart`, {
+          const cartResponse = await fetch(`${API_BASE_URL}/cart`, {
             headers: { Authorization: `Bearer ${data.token}`, 'Accept': 'application/json' },
           });
           if (cartResponse.ok) {
@@ -153,7 +153,7 @@ const AuthForm = ({ setCurrentPage, setIsAuthenticated, setUserRole, setCart, se
           setShowPassword(false);
         } else {
           // Try admin login
-          response = await fetch(`${apiUrl}/api/admin-login`, {
+          response = await fetch(`${API_BASE_URL}/admin-login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({ username, password }),

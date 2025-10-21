@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { API_BASE_URL } from "./config";
+import { API_BASE_URL, API_ORIGIN } from "./config";
 import "./App.css";
 import "./AuthForm.css";
 import "./Cart.css";
@@ -258,6 +258,27 @@ function App() {
     const role = localStorage.getItem("role");
     if (role) setUserRole(role);
   }, [currentPage, products.length, isAuthenticated, userRole, fetchProducts, fetchCart]);
+
+  // Keep products in sync in real time via Server-Sent Events
+  useEffect(() => {
+    let eventSource;
+    try {
+      eventSource = new EventSource(`${API_ORIGIN}/api/products/stream`);
+      eventSource.addEventListener('productsUpdate', () => {
+        fetchProducts();
+      });
+      eventSource.onerror = () => {
+        try { eventSource.close(); } catch (_) {}
+      };
+    } catch (_) {
+      // Ignore if EventSource not supported or blocked
+    }
+    return () => {
+      if (eventSource) {
+        try { eventSource.close(); } catch (_) {}
+      }
+    };
+  }, [fetchProducts]);
 
   // Add an effect to navigate to products page on successful authentication for users
   useEffect(() => {

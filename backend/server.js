@@ -63,6 +63,35 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+// Simple Server-Sent Events (SSE) setup to notify clients of product changes
+const sseClients = new Set();
+
+function broadcastProductsEvent(eventName, payload) {
+  const dataString = JSON.stringify(payload || {});
+  for (const client of sseClients) {
+    try {
+      client.write(`event: ${eventName}\n`);
+      client.write(`data: ${dataString}\n\n`);
+    } catch (e) {
+      // Drop broken client connections
+      try { client.end(); } catch (_) {}
+      sseClients.delete(client);
+    }
+  }
+}
+
+app.get('/api/products/stream', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  // Initial comment to establish stream
+  res.write(': connected\n\n');
+  sseClients.add(res);
+  req.on('close', () => {
+    sseClients.delete(res);
+  });
+});
+
 // Ensure we can connect to the database (Railway/local)
 initDatabase();
 
@@ -284,6 +313,8 @@ app.post('/api/products', authenticateAdmin, upload.single('image'), async (req,
       [name.trim(), parseFloat(price), imageUrl, category]
     );
     res.status(201).json({ message: 'Product added successfully', id: result.insertId });
+    // Notify clients to refresh products
+    broadcastProductsEvent('productsUpdate', { reason: 'created', id: result.insertId });
   } catch (err) {
     console.error('Error adding product:', err.message, err.stack);
     res.status(500).json({ error: 'Failed to add product' });
@@ -307,6 +338,8 @@ app.put('/api/products/:id', authenticateAdmin, upload.single('image'), async (r
       return res.status(404).json({ error: 'Product not found' });
     }
     res.json({ message: 'Product updated successfully' });
+    // Notify clients to refresh products
+    broadcastProductsEvent('productsUpdate', { reason: 'updated', id });
   } catch (err) {
     console.error('Error updating product:', err.message, err.stack);
     res.status(500).json({ error: 'Failed to update product' });
@@ -322,6 +355,8 @@ app.delete('/api/products/:id', authenticateAdmin, async (req, res) => {
       return res.status(404).json({ error: 'Product not found' });
     }
     res.json({ message: 'Product deleted successfully' });
+    // Notify clients to refresh products
+    broadcastProductsEvent('productsUpdate', { reason: 'deleted', id });
   } catch (err) {
     console.error('Error deleting product:', err.message, err.stack);
     res.status(500).json({ error: 'Failed to delete product' });

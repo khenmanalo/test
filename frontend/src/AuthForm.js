@@ -3,7 +3,13 @@ import { API_BASE_URL } from './config';
 import { Eye, EyeOff } from 'lucide-react';
 import './AuthForm.css';
 
-const AuthForm = ({ setCurrentPage, setIsAuthenticated, setUserRole, setCart, setParentError }) => {
+const AuthForm = ({
+  setCurrentPage,
+  setIsAuthenticated,
+  setUserRole,
+  setCart = () => {},
+  setParentError = () => {},
+}) => {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');

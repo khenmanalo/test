@@ -100,7 +100,7 @@ export const AdminDashboard = ({
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/products/${currentProduct._id}`, {
+      const response = await fetch(`${API_BASE_URL}/products/${currentProduct.id}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -253,14 +253,14 @@ export const AdminDashboard = ({
               <h4>{category.category}</h4>
               <ul className="admin-product-list">
                 {category.items.map((item) => (
-                  <li key={item._id} className="admin-product-item">
+                  <li key={item.id} className="admin-product-item">
                     <div className="product-details">
                       {item.image_url && <img src={item.image_url} alt={item.name} className="product-image-thumb" />}
                       <span>{item.name} - ₱{item.price} ({item.category})</span>
                     </div>
                     <div className="product-actions">
                       <button onClick={() => handleEditClick(item)} className="edit-button">Edit</button>
-                      <button onClick={() => handleDeleteProduct(item._id)} className="delete-button">Delete</button>
+                      <button onClick={() => handleDeleteProduct(item.id)} className="delete-button">Delete</button>
                     </div>
                   </li>
                 ))}

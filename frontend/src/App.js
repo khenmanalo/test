@@ -428,7 +428,7 @@ function App() {
 
   const ProductsPage = ({ setCart }) => {
     const addToCart = async (product) => {
-      try {
+    try {
         const response = await fetch(`${API_BASE_URL}/cart/add`, {
           method: "POST",
           headers: {
@@ -438,8 +438,18 @@ function App() {
           body: JSON.stringify({ productId: product.id, quantity: 1 }),
         });
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to add to cart");
+        // If 404, product was likely deleted; refetch products and show a clear message
+        if (response.status === 404) {
+          await fetchProducts();
+          throw new Error("This product is no longer available.");
+        }
+        const text = await response.text();
+        let message = "Failed to add to cart";
+        try {
+          const errorData = JSON.parse(text);
+          message = errorData.error || message;
+        } catch {}
+        throw new Error(message);
         }
         const cartResponse = await fetch(`${API_BASE_URL}/cart`, {
           headers: {

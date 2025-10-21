@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import './Admin.css'; // Assuming you have a CSS file for admin styles
 
 export const AdminDashboard = ({
@@ -53,7 +54,7 @@ export const AdminDashboard = ({
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/products', {
+      const response = await fetch(`${API_BASE_URL}/products`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -99,7 +100,7 @@ export const AdminDashboard = ({
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/products/${currentProduct._id}`, {
+      const response = await fetch(`${API_BASE_URL}/products/${currentProduct._id}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -131,7 +132,7 @@ export const AdminDashboard = ({
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/products/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/products/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
